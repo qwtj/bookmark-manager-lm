@@ -1,136 +1,299 @@
-# Bookmark Manager Web Application
+# bookmark-manager-lm
 
-This is a personal bookmark management web application.  It allows you to save, organize, and search your bookmarks using natural language queries.
+AI‑assisted bookmark manager that runs as a Chrome Extension (and also as a regular Vite + React web app). Search, filter, tag, rate, and de‑duplicate your bookmarks using natural language. Import/export to JSON or standard Netscape HTML. Choose from multiple LLM providers (Gemini, OpenAI, Grok, Ollama, LM Studio) and switch at runtime.
 
 ## Features
 
-*   **Bookmark Management:** Add, edit, and delete bookmarks.
-*   **Natural Language Search:**  Find, sort, and manage bookmarks using plain English commands powered by an AI agent.
-*   **AI-Powered Suggestions:** Generate descriptions and tags for bookmarks using the Gemini AI model.
-*   **URL Validation:** Automatically checks if a URL is reachable (can be ignored for private/local links).
-*   **Import/Export:** Import bookmarks from JSON or HTML files (Netscape Bookmark format), and export bookmarks to the same formats.
-*   **Duplicate Removal:** Scans and identifies duplicate bookmarks based on title and URL.
-*   **Keyboard Shortcuts:** Efficiently navigate and manage bookmarks using keyboard shortcuts.
-*   **Firebase Integration:**  Persists your bookmarks using Firebase Firestore with anonymous authentication.
-*   **Responsive Design:**  Works well on various screen sizes.
-*   **Favicon Support:** Display favicon from URL.
+- Natural language search (AI agent)
+  - Examples: “find github”, “find tags: react then sort by rating descending”, “show 3 stars or more”, “remove duplicates”
+  - Persist sorted order across all bookmarks (e.g., “reorder descending by title”)
+- Import/Export
+  - JSON array of bookmarks
+  - Netscape Bookmark HTML (compatible with browsers’ export files)
+- Bookmark management
+  - Add, edit, delete, tag, folder, rating, favicon support
+  - Multi‑select (Cmd/Ctrl+Click), open in new tab (Shift+Click)
+  - Detect and remove duplicates (by title + URL)
+- URL status
+  - Lightweight validity check via HEAD request (with a CORS proxy)
+  - One‑click “Ignore checking” toggle per bookmark
+- LLM integration (runtime‑configurable)
+  - Gemini, OpenAI (ChatGPT), Grok (x.ai), Ollama (local), LM Studio (local)
+  - Model discovery (where supported), custom base URLs, stored per provider
+- Storage backends
+  - Local (browser) by default
+  - Optional Firebase (Cloud Firestore) backend
+- Keyboard shortcuts
+  - Click selects; Cmd/Ctrl+Click multi‑selects; Shift+Click opens
+  - Double‑click or E to edit
+  - Esc clears selection
+  - Cmd/Ctrl+A select all, Cmd/Ctrl+D delete selected
+  - D deletes (with confirmation), Space opens selected
 
-## Technologies Used
+## Demo (quick tour)
 
-*   **React:** JavaScript library for building user interfaces.
-*   **Firebase:** Backend-as-a-service platform for authentication and data storage (Firestore).
-*   **Gemini AI Model (via API):**  For generating bookmark descriptions and tags.
-*   **Tailwind CSS:**  For styling the user interface.
-*   **corsproxy.io:**  Used to fetch URL status via CORS proxy.
+- Top search bar: type natural language queries and hit Enter.
+- Options: type “options” in the search bar to open provider settings.
+- Import/Export: button in the header for JSON/HTML.
+- Remove Duplicates: button in the header or type “remove duplicates”.
 
-## Getting Started
+## Getting started
 
 ### Prerequisites
 
-*   Node.js and npm (Node Package Manager)
-*   Firebase project configured
-*   Google Cloud project to utilize Gemini API (optional, can be skipped)
+- Node.js 18+
+- npm (or pnpm/yarn)
+- Google Chrome (for the extension)
+- Optional:
+  - API keys for LLMs (Gemini/OpenAI/Grok), or
+  - Local LLM runtime (Ollama or LM Studio)
 
-### Installation and Setup
+### Install
 
-1.  **Clone the repository:**
+```bash
+git clone https://github.com/your-org/bookmark-manager-lm.git
+cd bookmark-manager-lm
+npm install
+```
 
-    ```bash
-    git clone <repository_url>
-    cd <repository_directory>
-    ```
+### Run as a regular web app (dev)
 
-2.  **Install dependencies:**
+```bash
+npm run dev
+```
 
-    ```bash
-    npm install
-    ```
+Open the printed localhost URL (typically http://localhost:5173).
 
-3.  **Configure Firebase:**
+You can fully use the app in your browser. Configure AI in the in‑app Options dialog.
 
-    *   Create a Firebase project in the [Firebase Console](https://console.firebase.google.com/).
-    *   Enable Authentication (Anonymous) and Firestore.
-    *   Obtain your Firebase configuration object.  This will typically look like:
+### Build
 
-        ```javascript
-        const firebaseConfig = {
-          apiKey: "YOUR_API_KEY",
-          authDomain: "YOUR_AUTH_DOMAIN",
-          projectId: "YOUR_PROJECT_ID",
-          storageBucket: "YOUR_STORAGE_BUCKET",
-          messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-          appId: "YOUR_APP_ID",
-          measurementId: "YOUR_MEASUREMENT_ID"
-        };
-        ```
+```bash
+npm run build
+```
 
-    *   **Important:** This application expects the Firebase configuration and app ID to be defined as global variables via the environment when the app runs, either via a build process or direct injection. While the code uses `__firebase_config` and `__app_id`, these should be replaced with your preferred method of environment variable injection.  For example, if using Webpack, you might use the DefinePlugin.
+Prod preview (optional):
 
-    *   If using a build tool or bundler, configure it to inject `firebaseConfig` and `appId` as global variables at build time.  Consult your bundler's documentation for specifics.
+```bash
+npm run preview
+```
 
-4.  **Optional: Configure Gemini API (for AI suggestions):**
+## Chrome Extension
 
-    *   **Note:**  The Gemini API integration is optional.  The bookmark form will still function without it, but the "Suggest" buttons will be disabled.
-    *   The Gemini API Key functionality has been removed. Please configure your own Gemini API Key setup.
-    *   The Gemini API endpoint (`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`) is called directly from the client-side, but could also be implemented as a serverless function.
+This project builds a static site you can load as an extension.
 
-5.  **Start the development server:**
+1) Build:
 
-    ```bash
-    npm start
-    ```
+```bash
+npm run build
+```
 
-    This will usually start the application at `http://localhost:3000`.
+2) Create a minimal manifest.json in the dist folder (if not already present) like:
 
-## Usage
+```json
+{
+  "manifest_version": 3,
+  "name": "Bookmark Manager LM",
+  "version": "1.0.0",
+  "description": "AI-assisted bookmark manager.",
+  "action": {
+    "default_title": "Bookmark Manager",
+    "default_popup": "index.html"
+  },
+  "icons": {
+    "16": "icon-16.png",
+    "32": "icon-32.png",
+    "48": "icon-48.png",
+    "128": "icon-128.png"
+  },
+  "host_permissions": [
+    "https://corsproxy.io/*",
+    "https://www.google.com/*"
+  ],
+  "permissions": []
+}
+```
 
-1.  **Add a new bookmark:**  Click the "Add New" button.  Fill in the form and click "Save Bookmark."
-2.  **Edit a bookmark:** Click a bookmark to select it. Then, double-click the bookmark or press the "E" key, or click the Edit button in the details section.  Make your changes and click "Save Bookmark."
-3.  **Delete a bookmark:** Click a bookmark to select it. Then, click the Delete button in the details section, or use the keyboard shortcut (Ctrl/Cmd + D).
-4.  **Search for bookmarks:**  Type a natural language query in the search bar and press Enter. Examples:
+3) Load in Chrome:
+- Go to chrome://extensions
+- Enable “Developer mode”
+- Click “Load unpacked”
+- Select the dist folder
 
-    *   `find bookmarks about python`
-    *   `show my 5 star bookmarks`
-    *   `sort by title ascending`
-    *   `github in title and sort by rating`
-    *   `show top 3 javascript bookmarks`
+Open the extension popup or pin it to the toolbar. The app’s UI and features are identical to the web build.
 
-5.  **Import/Export bookmarks:** Click the "Import/Export" button.  Choose the appropriate tab (Export, Import JSON, Import HTML) and follow the instructions.
+Notes:
+- The app uses corsproxy.io for URL checks and Google S2 favicon service; host_permissions above allow those network requests from an extension page.
+- You can add more host_permissions if you change providers/base URLs (e.g., custom OpenAI base URL, local LM Studio/Ollama).
 
-## Keyboard Shortcuts
+## Configure AI providers
 
-*   **Click:** Select a bookmark and view details.
-*   **Double-click / E:** Edit the selected bookmark.
-*   **Shift + Click:** Open a bookmark in a new tab.
-*   **Ctrl/Cmd + Click:** Select multiple bookmarks.
-*   **Ctrl/Cmd + A:** Select all bookmarks in the current view.
-*   **Ctrl/Cmd + D:** Delete selected bookmarks.
-*   **Esc:** Clear all selections.
+You can configure everything at runtime in the Options dialog (type “options” in the search bar). Settings persist per browser in localStorage.
 
-## Code Structure
+Supported providers:
+- Gemini
+- OpenAI (ChatGPT)
+- Grok (x.ai)
+- Ollama (local)
+- LM Studio (local)
 
-*   `src/BookmarkApp.js`: Main component, handles state management, Firebase interaction, and UI rendering.
-*   `src/components/BookmarkForm.js`: Component for adding/editing bookmarks.
-*   `src/components/ImportExportContent.js`: Component for importing/exporting bookmarks.
-*   `src/components/DeleteConfirmModal.js`: Component for confirmation before deleting.
-*   `src/components/HelpModal.js`: Component for explaining the application functionality.
-*   `src/components/MessageModal.js`: Component for displaying messages.
+Options per provider:
+- API key (remote providers)
+- Base URL (OpenAI/Grok optional; Ollama/LM Studio required, e.g., http://localhost:11434 or http://localhost:1234)
+- Model: auto‑discovery where supported, or type manually
 
-## Environment Variables
+Local providers:
+- Ollama: install and run, pull a model (e.g., llama3.1), set base URL: http://localhost:11434
+- LM Studio: run the local server, set base URL (default is often http://localhost:1234)
 
-The application relies on the following environment variables:
+Tip: If an LLM call fails or returns invalid output, the app gracefully falls back to a general search.
 
-*   `__firebase_config`:  The Firebase configuration object (JSON string).
-*   `__app_id`: The Firebase app ID.
-*   `__initial_auth_token`: Optional. Custom token to automatically sign the user in.
+## Optional: Build‑time defaults
 
-**Important:** These variables are expected to be injected at build time or runtime by your environment.  Do not hardcode them directly into the source code.
+You can set global defaults with Vite’s define. This is optional; the in‑app Options are usually enough.
 
-## Notes
+vite.config.(js|ts) example:
 
-*   The URL validation feature uses `corsproxy.io` as a CORS proxy to check URL status.  This is a public service and may have limitations.
-*   Error handling and user feedback are implemented through the `MessageModal` component.
+```js
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+// You can also read from process.env or .env files (VITE_* vars)
+export default defineConfig({
+  plugins: [react()],
+  define: {
+    __llm_provider__: JSON.stringify('gemini'),
+    __llm_options__: JSON.stringify({
+      // apiKey: process.env.VITE_GEMINI_API_KEY,
+      // model: 'gemini-2.0-flash'
+    }),
+    __use_firebase__: JSON.stringify(false),
+    __firebase_config: JSON.stringify(undefined),
+    __app_id: JSON.stringify('bookmark-manager-lm'),
+    __initial_auth_token: JSON.stringify(undefined)
+  }
+})
+```
+
+If you set __use_firebase__ to true, also provide a valid __firebase_config (see Firebase section).
+
+## Firebase (optional)
+
+The app can use Firebase (Cloud Firestore) instead of local storage.
+
+Steps:
+1) Create a Firebase project and enable Firestore
+2) Grab your web app config:
+   - apiKey, authDomain, projectId, etc.
+3) Provide it at build time:
+   - Set __use_firebase__: true
+   - Set __firebase_config: the JSON stringified Firebase config
+4) Rebuild and run
+
+Auth:
+- The code exposes an optional __initial_auth_token if you want to inject an auth token at boot.
+- If you don’t provide auth, your store module may default to anonymous or local. See your store implementation for details.
+
+Data model:
+- Bookmarks are stored with timestamps (createdAt/updatedAt)
+- Reorder and live updates are supported via store methods
+
+## Import/Export
+
+- JSON
+  - Exports an array of bookmark objects
+  - Import expects the same: an array
+
+Bookmark JSON shape (id is optional on import):
+```json
+[
+  {
+    "id": "optional",
+    "title": "Example",
+    "url": "https://example.com",
+    "description": "Short description",
+    "tags": ["reference", "web"],
+    "rating": 4,
+    "folderId": "work",
+    "faviconUrl": "https://example.com/favicon.ico",
+    "createdAt": "2024-01-01T12:00:00.000Z",
+    "updatedAt": "2024-01-01T12:00:00.000Z",
+    "urlStatus": "valid"
+  }
+]
+```
+
+- HTML (Netscape Bookmark File)
+  - Compatible with exports from Chrome/Firefox/etc.
+  - You can upload the file or paste its contents
+  - Export creates a standard bookmark HTML with fields like ADD_DATE, LAST_MODIFIED, ICON, DESCRIPTION
+
+## Natural language commands (examples)
+
+- find github
+- find tags: react then sort by rating descending
+- filter rating >= 4 then sort by title asc
+- show 3 stars or more
+- remove duplicates
+- show all
+- reorder ascending by title
+- limit first 10
+- options (opens Options dialog)
+- import or export (opens Import/Export)
+
+The agent plans actions (search, filter, sort, limit, persist reorder) and updates the view accordingly.
+
+## Keyboard shortcuts
+
+- Click: select a bookmark
+- Cmd/Ctrl+Click: toggle multi‑select
+- Shift+Click: open in new tab
+- Double‑click or E: edit selected
+- Esc: clear selection
+- Cmd/Ctrl+A: select all visible
+- Cmd/Ctrl+D or D: delete selected (with confirmation)
+- Space (on focused tile): select/open depending on context
+
+## URL validation
+
+- The app checks URLs via a HEAD request using https://corsproxy.io
+- If a site is blocked/unreachable, status may show “invalid”
+- You can toggle “Ignore checking” per bookmark
+- Note: Using a third‑party CORS proxy means the checked URL is sent to that proxy
+
+## Privacy and storage
+
+- Local mode: data stays in your browser (local storage/IndexedDB per store implementation)
+- Firebase mode: data is stored in your Firebase project
+- API keys you enter in Options are saved to localStorage in your browser
+- LLM calls are made from your browser to providers you select
+
+## Troubleshooting
+
+- LLM errors/failures:
+  - Ensure API key and base URL (if applicable) are set in Options
+  - Try the “Refresh” button next to Model
+  - Use a smaller model or local provider for testing
+- Extension shows blank page:
+  - Confirm manifest.json exists in dist
+  - Load unpacked pointing to the dist folder after a build
+  - Check Chrome console for CSP/network issues and adjust host_permissions
+- URL check always invalid:
+  - Some sites block HEAD or CORS proxy; toggle “Ignore checking”
+
+## Scripts
+
+- npm run dev — start Vite dev server
+- npm run build — production build
+- npm run preview — preview production build
+
+## Contributing
+
+Issues and PRs are welcome. Please:
+- Keep UI accessible and keyboard‑friendly
+- Avoid introducing server dependencies (this is a client‑first tool)
+- Add tests or simple repro steps where helpful
 
 ## License
 
-This project is licensed under the MIT License - see the `LICENSE` file for details.
+Add your project’s license here (e.g., MIT).
