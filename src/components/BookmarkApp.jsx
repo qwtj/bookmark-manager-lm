@@ -34,6 +34,7 @@ const BookmarkApp = () => {
 
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
   const [messageModalContent, setMessageModalContent] = useState({ message: '', type: 'info' });
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
 
   const storeRef = useRef(null);
   // Runtime-selectable LLM provider (persisted)
@@ -87,6 +88,9 @@ const BookmarkApp = () => {
         setSelectedBookmarkId(null);
         setMultiSelectedBookmarkIds([]);
         setBookmarksToDelete([]);
+      }
+      if (e.key === 'h' || e.key === 'H') {
+        setIsHeaderVisible(prev => !prev);
       }
       // Use ref to get latest selectedBookmarkId
       if (e.key === 'c' && selectedBookmarkIdRef.current) {
@@ -662,50 +666,52 @@ const BookmarkApp = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
-      <header className="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-10" role="banner">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <h1 className="sr-only">Bookmark Manager</h1>
-          <div className="flex justify-center items-center space-x-2">
-            <div className="relative w-full max-w-md">
-              <input
-                id="search-input"
-                type="text"
-                placeholder="Type natural language queries (e.g., 'find github')"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={handleSearchInputKeyDown}
-                disabled={isProcessing}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              {isProcessing && (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
-              )}
+      <header className={`fixed top-0 left-0 right-0 z-10 transition-transform duration-300 ${isHeaderVisible ? 'translate-y-0' : '-translate-y-full'}`} style={{ height: '112px' }} role="banner">
+        <div className="bg-white shadow-sm border-b border-gray-200 h-full">
+          <div className="max-w-4xl mx-auto px-4 py-4 h-full flex flex-col justify-center">
+            <h1 className="sr-only">Bookmark Manager</h1>
+            <div className="flex justify-center items-center space-x-2">
+              <div className="relative w-full max-w-md">
+                <input
+                  id="search-input"
+                  type="text"
+                  placeholder="Type natural language queries (e.g., 'find github')"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={handleSearchInputKeyDown}
+                  disabled={isProcessing}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                {isProcessing && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+                )}
+              </div>
+              <button
+                onClick={() => setIsHelpModalOpen(true)}
+                className="p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                aria-label="Help"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M9.09 9a3 3 0 115.82 1c-.44.86-1.26 1.3-1.91 1.63-.51.26-.75.52-.75.87v.5"/>
+                  <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+              </button>
             </div>
-            <button
-              onClick={() => setIsHelpModalOpen(true)}
-              className="p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              aria-label="Help"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M9.09 9a3 3 0 115.82 1c-.44.86-1.26 1.3-1.91 1.63-.51.26-.75.52-.75.87v.5"/>
-                <line x1="12" y1="17" x2="12.01" y2="17"/>
-              </svg>
-            </button>
-          </div>
-          <div className="flex justify-center items-center mt-2 space-x-2">
-            <button onClick={handleAddNewBookmark} className="px-3 py-1 bg-green-500 text-white text-sm rounded-md hover:bg-green-600">Add New</button>
-            <button onClick={handleImportExportOpen} className="px-3 py-1 bg-indigo-500 text-white text-sm rounded-md hover:bg-indigo-600">Import/Export</button>
-            <button onClick={handleRemoveDuplicates} className="px-3 py-1 bg-yellow-500 text-white text-sm rounded-md hover:bg-yellow-600">Remove Duplicates</button>
-            {lastAction && <button onClick={resetSearch} className="px-3 py-1 bg-gray-500 text-white text-sm rounded-md hover:bg-gray-600">Clear Search</button>}
-          </div>
-          <div className="text-center text-xs text-gray-500 mt-2">
-            Click to select, <kbd className="font-sans px-1.5 py-0.5 border border-gray-300 bg-gray-100 rounded">Shift</kbd>+click to open, double-click or <kbd className="font-sans px-1.5 py-0.5 border border-gray-300 bg-gray-100 rounded">E</kbd> to edit.
+            <div className="flex justify-center items-center mt-2 space-x-2">
+              <button onClick={handleAddNewBookmark} className="px-3 py-1 bg-green-500 text-white text-sm rounded-md hover:bg-green-600">Add New</button>
+              <button onClick={handleImportExportOpen} className="px-3 py-1 bg-indigo-500 text-white text-sm rounded-md hover:bg-indigo-600">Import/Export</button>
+              <button onClick={handleRemoveDuplicates} className="px-3 py-1 bg-yellow-500 text-white text-sm rounded-md hover:bg-yellow-600">Remove Duplicates</button>
+              {lastAction && <button onClick={resetSearch} className="px-3 py-1 bg-gray-500 text-white text-sm rounded-md hover:bg-gray-600">Clear Search</button>}
+            </div>
+            <div className="text-center text-xs text-gray-500 mt-2">
+              Click to select, <kbd className="font-sans px-1.5 py-0.5 border border-gray-300 bg-gray-100 rounded">Shift</kbd>+click to open, double-click or <kbd className="font-sans px-1.5 py-0.5 border border-gray-300 bg-gray-100 rounded">E</kbd> to edit.
+            </div>
           </div>
         </div>
       </header>
 
-      <main className="pt-28 pb-8" role="main">
+      <main className={`pb-8 transition-all duration-300 ${isHeaderVisible ? 'pt-28' : 'pt-4'}`} role="main">
         <div className="max-w-4xl mx-auto px-4">
           {lastAction && (
             <div className={`mb-4 p-3 rounded-lg ${lastAction.action === 'error' ? 'bg-red-50 border border-red-200' : 'bg-green-50 border border-green-200'}`} role="status">
